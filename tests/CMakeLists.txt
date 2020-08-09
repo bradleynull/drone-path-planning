@@ -1,0 +1,3 @@
+add_executable(map_read_test map_read_test.cc)
+target_link_libraries(map_read_test drone_path_planning)
+add_test(NAME map_read COMMAND map_read_test)
