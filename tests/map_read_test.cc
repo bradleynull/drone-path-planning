@@ -23,6 +23,18 @@ bool read_map() {
       }
     }
   }
+
+  if(*emap.GetLocations('A').begin() != std::make_pair(0, 1)) {
+    std::cout << "Unable to find location for A in map" << std::endl;
+    return false;
+  }
+
+  if(*emap.GetLocations('B').begin() != std::make_pair(2, 2)) {
+    std::cout << "Unable to find location for A in map" << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 int main(int argc, char** argv) {

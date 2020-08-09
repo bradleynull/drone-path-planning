@@ -1,3 +1,7 @@
 add_executable(map_read_test map_read_test.cc)
 target_link_libraries(map_read_test drone_path_planning)
 add_test(NAME map_read COMMAND map_read_test)
+
+add_executable(path_planner_test path_planner_test.cc)
+target_link_libraries(path_planner_test drone_path_planning)
+add_test(NAME path_planner COMMAND path_planner_test)

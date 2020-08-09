@@ -13,7 +13,7 @@ ElevationMap::~ElevationMap() {
 }
 
 bool ElevationMap::ReadMap(const std::string& map_filename) {
-  map_.clear();
+  Clear();
   std::ifstream in_file(map_filename);
   // Try to open the file or fail out
   if (!in_file.is_open()) {
@@ -55,16 +55,19 @@ bool ElevationMap::ReadMap(const std::string& map_filename) {
           // Make sure we know about this location
           if(key_loc != kSpecialLocations.end()) {
             map_.back().emplace_back(key_loc->second);
+            // Store the special locations for convenience
+            special_locations_[key_loc->first].emplace_back(std::make_pair(
+                int(map_.size()) - 1, int(map_.back().size()) - 1));
           }  else {
             std::cerr << "ElevationMap::ReadMap: Unable to parse location "
                       << token << std::endl;
-            map_.clear();
+            Clear();
             return false;
           }
         } else {
             std::cerr << "ElevationMap::ReadMap: Unable to parse token "
                       << token << std::endl;
-            map_.clear();
+            Clear();
             return false;
         }
       }
@@ -75,7 +78,7 @@ bool ElevationMap::ReadMap(const std::string& map_filename) {
   size_t row_size = map_.begin()->size();
   for(const auto& row : map_) {
     if(row.size() != row_size) {
-      map_.clear();
+      Clear();
       std::cerr << "ElevationMap::ReadMap: Inconsistent row size "
                 << row_size << " vs. " << row.size() << std::endl;
       return false;
@@ -83,6 +86,14 @@ bool ElevationMap::ReadMap(const std::string& map_filename) {
   }
 
   return true;
+}
+
+std::vector<std::pair<int, int>> ElevationMap::GetLocations(char c) {
+  auto it = special_locations_.find(c);
+  if(it != special_locations_.end()) {
+    return it->second;
+  }
+  return std::vector<std::pair<int, int>>();
 }
 
 int ElevationMap::operator()(int row, int col) const {
