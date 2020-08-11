@@ -26,8 +26,8 @@ bool ElevationMap::ReadMap(const std::string& map_filename) {
   std::string token;
   // For each row in the map bookended by []
   while (std::getline(in_file, row, ']')) {
-    // Check for an empty row at the end of the file
-    if(row.size() == 0) {
+    // Check for an empty row at the end of the file, or just a comma
+    if(row.size() <= 1) {
       continue;
     }
     map_.emplace_back(std::vector<int>());
@@ -94,6 +94,12 @@ std::vector<std::pair<int, int>> ElevationMap::GetLocations(char c) {
     return it->second;
   }
   return std::vector<std::pair<int, int>>();
+}
+
+int& ElevationMap::operator()(int row, int col) {
+  // This function is supposed to throw, but just let the natural vector 
+  // throw handle it
+  return map_.at(row).at(col);
 }
 
 int ElevationMap::operator()(int row, int col) const {

@@ -34,6 +34,12 @@ class ElevationMap {
   /// @return The value at row, col. Throws `out_of_range` if row, col does
   /// not exist
   int operator()(int row, int col) const;
+  /// @brief Get an element in the current map for mutating
+  /// @param row - The row index into the map
+  /// @param col - The column index into the map
+  /// @return The value at row, col. Throws `out_of_range` if row, col does
+  /// not exist
+  int& operator()(int row, int col);
   /// @brief Get the total number of rows in the map
   /// @return The total number of rows
   const int rows() const { return int(map_.size()); }

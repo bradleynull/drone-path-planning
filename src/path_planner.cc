@@ -10,8 +10,26 @@ PathPlanner::PathPlanner(const ElevationMap& emap) : emap_(emap) {
 PathPlanner::~PathPlanner() {
 }
 
-bool PathPlanner::PlanPath(std::vector<int>* elevation_profile,
+bool PathPlanner::PlanPath(std::vector<int>* elevation_profile, double agl,
                            std::vector<std::pair<int, int>>* path) {
+  // First generate the base path and elevation
+  if(!GenerateBasePath(elevation_profile, path)) {
+    std::cerr << "PathPlanner::PlanPath: Unable to generate a base path from "
+                 "start to finish!"
+              << std::endl;
+    return false;
+  }
+
+  // Filter the elevation profile based on the agl
+  for(auto& el : *elevation_profile) {
+    el += agl;
+  }
+
+  return true;
+}
+
+bool PathPlanner::GenerateBasePath(std::vector<int>* elevation_profile,
+                                   std::vector<std::pair<int, int>>* path) {
   // Check that we have exactly one start and one end position
   auto start_pos = emap_.GetLocations(kStartPos);
   if(start_pos.size() != 1) {
@@ -27,7 +45,6 @@ bool PathPlanner::PlanPath(std::vector<int>* elevation_profile,
               << std::endl;
     return false;
   }
-
   // Define the line between the start and the beginning
   // TODO Replace this with an actual path planning algorithm to minimize 
   //  elevation change cost?
@@ -53,6 +70,5 @@ bool PathPlanner::PlanPath(std::vector<int>* elevation_profile,
     elevation_profile->emplace_back(
       emap_(current_pos.first, current_pos.second));
   }
-
   return true;
 }

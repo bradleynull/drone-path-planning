@@ -37,8 +37,35 @@ bool read_map() {
   return true;
 }
 
+bool read_large_map() {
+  path_planning::ElevationMap emap;
+  if (!emap.ReadMap("example_data/test_map.txt")) {
+    return false;
+  }
+  return true;
+}
+
+bool map_assign() {
+  path_planning::ElevationMap emap;
+  if (!emap.ReadMap("example_data/small_map.txt")) {
+    return false;
+  }
+
+  emap(0, 0) = -100;
+  if(emap(0, 0) != -100) {
+    return false;
+  }
+  return true;
+}
+
 int main(int argc, char** argv) {
   if(!read_map()) {
+    return -1;
+  }
+  if(!read_large_map()) {
+    return -1;
+  }
+  if(!map_assign()) {
     return -1;
   }
   std::cout << "All map read tests passed!" << std::endl;
