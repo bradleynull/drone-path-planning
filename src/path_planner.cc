@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 
 #include "path_planner.h"
 
@@ -10,7 +11,9 @@ PathPlanner::PathPlanner(const ElevationMap& emap) : emap_(emap) {
 PathPlanner::~PathPlanner() {
 }
 
-bool PathPlanner::PlanPath(std::vector<int>* elevation_profile, double agl,
+bool PathPlanner::PlanPath(std::vector<int>* elevation_profile,
+                           std::vector<int>* filtered_elevation_profile,
+                           const int& agl,
                            std::vector<std::pair<int, int>>* path) {
   // First generate the base path and elevation
   if(!GenerateBasePath(elevation_profile, path)) {
@@ -21,9 +24,11 @@ bool PathPlanner::PlanPath(std::vector<int>* elevation_profile, double agl,
   }
 
   // Filter the elevation profile based on the agl
-  for(auto& el : *elevation_profile) {
+  *filtered_elevation_profile = *elevation_profile;
+  for(auto& el : *filtered_elevation_profile) {
     el += agl;
   }
+  *filtered_elevation_profile = MedianFilter(*filtered_elevation_profile, 9);
 
   return true;
 }
@@ -71,4 +76,30 @@ bool PathPlanner::GenerateBasePath(std::vector<int>* elevation_profile,
       emap_(current_pos.first, current_pos.second));
   }
   return true;
+}
+
+std::vector<int> PathPlanner::MedianFilter(
+    const std::vector<int>& elevation_profile, const int& filter_width) {
+  std::vector<int> filtered_data;
+  // Just a slow median filter because we sort sooo much
+  for (int i = 0; i < elevation_profile.size(); i++) {
+    // Don't try to filter the first values
+    if(i < filter_width) {
+      filtered_data.emplace_back(elevation_profile[i]);
+      continue;
+    }
+
+    std::vector<int> filter_vals(elevation_profile.begin() + i - filter_width,
+                                 elevation_profile.begin() + i);
+    std::sort(filter_vals.begin(), filter_vals.end());
+    // Take the average if there's an even number
+    if (filter_width % 2 == 0) {
+      filtered_data.emplace_back(
+          (filter_vals[filter_width / 2 - 1] + filter_vals[filter_width / 2]) /
+          2);
+    } else {
+      filtered_data.emplace_back(filter_vals[std::ceil(filter_width / 2)]);
+    }
+  }
+  return filtered_data;
 }

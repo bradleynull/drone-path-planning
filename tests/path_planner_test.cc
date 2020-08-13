@@ -16,8 +16,9 @@ bool plan_path() {
   pp::PathPlanner planner(emap);
 
   std::vector<int> el_profile;
+  std::vector<int> filt_el_profile;
   std::vector<std::pair<int, int>> path;
-  if(!planner.PlanPath(&el_profile, 0.0, &path)) {
+  if(!planner.PlanPath(&el_profile, &filt_el_profile, 0.0, &path)) {
       return false;
   }
 
@@ -52,8 +53,9 @@ bool plan_large_path() {
 
   pp::PathPlanner planner(emap);
   std::vector<int> el_profile;
+  std::vector<int> filt_el_profile;
   std::vector<std::pair<int, int>> path;
-  if(!planner.PlanPath(&el_profile, 0.0, &path)) {
+  if(!planner.PlanPath(&el_profile, &filt_el_profile, 0.0, &path)) {
     return false;
   }
 
@@ -72,11 +74,37 @@ bool plan_large_path() {
 
   return true;
 }
+
+bool filter_large_path() {
+  pp::ElevationMap emap;
+  if(!emap.ReadMap("example_data/test_map.txt")) {
+    std::cerr << "plan_large_path: ERROR! Unable to parse map." << std::endl;
+    return false;
+  }
+
+  pp::PathPlanner planner(emap);
+  std::vector<int> el_profile;
+  std::vector<int> filt_el_profile;
+  std::vector<std::pair<int, int>> path;
+  if(!planner.PlanPath(&el_profile, &filt_el_profile, 0.0, &path)) {
+    return false;
+  }
+
+  for(int i = 0; i < el_profile.size(); i++) {
+    std::cout << el_profile[i] << " - " << filt_el_profile[i] << std::endl;
+  }
+
+  return true;
+}
+
 int main(int argc, char** argv) {
   if (!plan_path()) {
     return -1;
   }
   if(!plan_large_path()) {
+    return -1;
+  }
+  if(!filter_large_path()) {
     return -1;
   }
 
