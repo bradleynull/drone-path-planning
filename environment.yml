@@ -1,0 +1,10 @@
+name: drone-path-planning
+channels:
+  - defaults
+dependencies:
+  - matplotlib
+  - numpy
+  - scipy
+  - ipython
+prefix: 
+
