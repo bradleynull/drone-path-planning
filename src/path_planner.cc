@@ -12,7 +12,7 @@ PathPlanner::~PathPlanner() {
 }
 
 bool PathPlanner::PlanPath(std::vector<int>* elevation_profile,
-                           std::vector<int>* filtered_elevation_profile,
+                           std::vector<int>* agl_elevation_profile,
                            const int& agl,
                            std::vector<std::pair<int, int>>* path) {
   // First generate the base path and elevation
@@ -23,12 +23,17 @@ bool PathPlanner::PlanPath(std::vector<int>* elevation_profile,
     return false;
   }
 
+  // Set the begining and end to the same as the next/previous since they are
+  // marked with negative numbers
+  (*elevation_profile)[0] = (*elevation_profile)[1];
+  (*elevation_profile)[elevation_profile->size() - 1] =
+      (*elevation_profile)[elevation_profile->size() - 2];
+
   // Filter the elevation profile based on the agl
-  *filtered_elevation_profile = *elevation_profile;
-  for(auto& el : *filtered_elevation_profile) {
+  *agl_elevation_profile = *elevation_profile;
+  for(auto& el : *agl_elevation_profile) {
     el += agl;
   }
-  *filtered_elevation_profile = MedianFilter(*filtered_elevation_profile, 9);
 
   return true;
 }
@@ -101,5 +106,21 @@ std::vector<int> PathPlanner::MedianFilter(
       filtered_data.emplace_back(filter_vals[std::ceil(filter_width / 2)]);
     }
   }
+  return filtered_data;
+}
+
+std::vector<int> PathPlanner::LowpassFilter(
+    const std::vector<int>& elevation_profile, const double& alpha) {
+  if(alpha < 0.0 || alpha > 1.0) {
+    std::cerr << "PathPlanner::LowpassFilter: Alpha must be between 0 and 1!"
+              << std::endl;
+    return elevation_profile;
+  }
+  std::vector<int> filtered_data{elevation_profile[1]};
+  for (int i = 1; i < elevation_profile.size(); i++) {
+    filtered_data.emplace_back(int(alpha * elevation_profile[i] +
+                                   (1.0 - alpha) * filtered_data.back()));
+  }
+
   return filtered_data;
 }

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <fstream>
 
 namespace pp = path_planning;
 
@@ -16,14 +17,14 @@ bool plan_path() {
   pp::PathPlanner planner(emap);
 
   std::vector<int> el_profile;
-  std::vector<int> filt_el_profile;
+  std::vector<int> agl_el_profile;
   std::vector<std::pair<int, int>> path;
-  if(!planner.PlanPath(&el_profile, &filt_el_profile, 0.0, &path)) {
+  if(!planner.PlanPath(&el_profile, &agl_el_profile, 0, &path)) {
       return false;
   }
 
   // Expected path for the small map
-  std::vector<int> expected_el_profile = {-1, 121, 122, -2};
+  std::vector<int> expected_el_profile = {121, 121, 122, 122};
   std::vector<std::pair<int, int>> expected_path = {
     std::make_pair(0, 1),
     std::make_pair(1, 1),
@@ -53,9 +54,9 @@ bool plan_large_path() {
 
   pp::PathPlanner planner(emap);
   std::vector<int> el_profile;
-  std::vector<int> filt_el_profile;
+  std::vector<int> agl_el_profile;
   std::vector<std::pair<int, int>> path;
-  if(!planner.PlanPath(&el_profile, &filt_el_profile, 0.0, &path)) {
+  if(!planner.PlanPath(&el_profile, &agl_el_profile, 0, &path)) {
     return false;
   }
 
@@ -84,15 +85,45 @@ bool filter_large_path() {
 
   pp::PathPlanner planner(emap);
   std::vector<int> el_profile;
-  std::vector<int> filt_el_profile;
+  std::vector<int> agl_el_profile;
   std::vector<std::pair<int, int>> path;
-  if(!planner.PlanPath(&el_profile, &filt_el_profile, 0.0, &path)) {
+  if(!planner.PlanPath(&el_profile, &agl_el_profile, 20, &path)) {
     return false;
   }
+  std::vector<int> med3_filt_profile = planner.MedianFilter(agl_el_profile, 3);
+  std::vector<int> med9_filt_profile = planner.MedianFilter(agl_el_profile, 9);
+  std::vector<int> lp005_filt_profile =
+      planner.LowpassFilter(agl_el_profile, 0.05);
+  std::vector<int> lp02_filt_profile =
+      planner.LowpassFilter(agl_el_profile, 0.2);
 
-  for(int i = 0; i < el_profile.size(); i++) {
-    std::cout << el_profile[i] << " - " << filt_el_profile[i] << std::endl;
-  }
+  // output as json for easy parsing
+  std::ofstream out_file;
+  std::string test_filename = "./filter_large_path.json";
+  out_file.open(test_filename);
+  auto write_path = [&out_file](const std::string& path_name, const std::vector<int>& path) {
+    out_file << "{\"name\":\"" << path_name << "\",";
+    out_file << "\"path\":[";
+    for(size_t i = 0; i < path.size() - 1; i++) {
+      out_file << path[i] << ",";
+    }
+    out_file << path.back() << "]}";
+  };
+  out_file << "[";
+  write_path("original_path", el_profile);
+  out_file << ",";
+  write_path("agl_path", agl_el_profile);
+  out_file << ",";
+  write_path("median_filter_3", med3_filt_profile);
+  out_file << ",";
+  write_path("median_filter_9", med9_filt_profile);
+  out_file << ",";
+  write_path("lowpass_0.05", lp005_filt_profile);
+  out_file << ",";
+  write_path("lowpass_0.2", lp02_filt_profile);
+  out_file << "]";
+  out_file.close();
+  std::cout << "Test files written to: " << test_filename << std::endl;
 
   return true;
 }
