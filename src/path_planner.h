@@ -49,6 +49,22 @@ class PathPlanner {
   /// @return The filtered signal
   std::vector<int> LowpassFilter(const std::vector<int>& elevation_profile,
                                  const double& alpha);
+  /// @brief Apply a mean filter to the input data
+  /// @param elevation_profile The data to filter
+  /// @param filter_width The width of the data to consider for the mean
+  /// @return The filtered signal
+  std::vector<int> MeanFilter(const std::vector<int>& elevation_profile,
+                              const int& filter_width);
+  /// @brief Correct the path by making sure it does not collide with the ground
+  /// based on some given threshold
+  /// @param elevation_profile The original elevation profile of the map
+  /// @param filtered_profile The output of applying a filter to the profile
+  /// @param min_alt The minimum value the path must be from the
+  /// `elevation_profile`
+  /// @return The clipped path that will not collied with the ground
+  std::vector<int> CorrectPath(const std::vector<int>& elevation_profile,
+                               const std::vector<int>& filtered_profile,
+                               const int& min_alt);
 
  private:
   /// @brief Generate the base elevation profile and path prior to filtering

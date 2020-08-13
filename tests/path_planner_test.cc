@@ -90,12 +90,18 @@ bool filter_large_path() {
   if(!planner.PlanPath(&el_profile, &agl_el_profile, 20, &path)) {
     return false;
   }
-  std::vector<int> med3_filt_profile = planner.MedianFilter(agl_el_profile, 3);
-  std::vector<int> med9_filt_profile = planner.MedianFilter(agl_el_profile, 9);
-  std::vector<int> lp005_filt_profile =
-      planner.LowpassFilter(agl_el_profile, 0.05);
-  std::vector<int> lp02_filt_profile =
-      planner.LowpassFilter(agl_el_profile, 0.2);
+  std::vector<int> med3_filt_profile = planner.CorrectPath(
+      el_profile, planner.MedianFilter(agl_el_profile, 3), 5);
+  std::vector<int> med9_filt_profile = planner.CorrectPath(
+      el_profile, planner.MedianFilter(agl_el_profile, 9), 5);
+  std::vector<int> lp005_filt_profile = planner.CorrectPath(
+      el_profile, planner.LowpassFilter(agl_el_profile, 0.05), 5);
+  std::vector<int> lp02_filt_profile = planner.CorrectPath(
+      el_profile, planner.LowpassFilter(agl_el_profile, 0.2), 5);
+  std::vector<int> mean3_filt_profile =
+      planner.CorrectPath(el_profile, planner.MeanFilter(agl_el_profile, 3), 5);
+  std::vector<int> mean9_filt_profile =
+      planner.CorrectPath(el_profile, planner.MeanFilter(agl_el_profile, 9), 5);
 
   // output as json for easy parsing
   std::ofstream out_file;
@@ -117,6 +123,10 @@ bool filter_large_path() {
   write_path("median_filter_3", med3_filt_profile);
   out_file << ",";
   write_path("median_filter_9", med9_filt_profile);
+  out_file << ",";
+  write_path("mean_filter_3", mean3_filt_profile);
+  out_file << ",";
+  write_path("mean_filter_9", mean9_filt_profile);
   out_file << ",";
   write_path("lowpass_0.05", lp005_filt_profile);
   out_file << ",";

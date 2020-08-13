@@ -1,5 +1,6 @@
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 
 #include "path_planner.h"
 
@@ -103,7 +104,8 @@ std::vector<int> PathPlanner::MedianFilter(
           (filter_vals[filter_width / 2 - 1] + filter_vals[filter_width / 2]) /
           2);
     } else {
-      filtered_data.emplace_back(filter_vals[std::ceil(filter_width / 2)]);
+      filtered_data.emplace_back(
+          filter_vals[int(std::ceil(filter_width / 2.0))]);
     }
   }
   return filtered_data;
@@ -123,4 +125,40 @@ std::vector<int> PathPlanner::LowpassFilter(
   }
 
   return filtered_data;
+}
+
+std::vector<int> PathPlanner::MeanFilter(
+    const std::vector<int>& elevation_profile, const int& filter_size) {
+  std::vector<int> filtered_data;
+  for (size_t i = 0; i < elevation_profile.size()-1; i++) {
+    int real_filt_idx =
+        std::min(int(i) + filter_size, int(elevation_profile.size() - 1));
+    double sum = std::accumulate(elevation_profile.begin() + i,
+                              elevation_profile.begin() + real_filt_idx, 0.0);
+    filtered_data.emplace_back(int(std::round(sum / (real_filt_idx - i))));
+  }
+  /// Accumulate will return 0 for the the final index, so just append it since
+  /// that will be the output of the mean filter anyway
+  filtered_data.emplace_back(elevation_profile.back());
+
+  return filtered_data;
+}
+
+std::vector<int> PathPlanner::CorrectPath(
+    const std::vector<int>& elevation_profile,
+    const std::vector<int>& filtered_profile, const int& min_alt) {
+  if (elevation_profile.size() != filtered_profile.size()) {
+    std::cerr << "PathPlanner::CorrectPath: Unable to correct path, the "
+                 "elevation profile and filtered profile are different sizes!"
+              << std::endl;
+    return filtered_profile;
+  }
+
+  std::vector<int> clipped_data;
+  for (size_t i = 0; i < elevation_profile.size(); i++) {
+    clipped_data.emplace_back(
+        std::max(elevation_profile[i] + min_alt, filtered_profile[i]));
+  }
+  
+  return clipped_data;
 }
